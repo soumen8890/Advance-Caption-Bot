@@ -16,7 +16,7 @@ def is_enabled(value, default):
 
 ADMIN = int(getenv("ADMIN", "6964203412 6233910543"))
 SILICON_PIC = os.environ.get("SILICON_PIC", "https://telegra.ph/file/21a8e96b45cd6ac4d3da6.jpg")
-API_ID = int(getenv("API_ID", ""))
+API_ID = int(getenv("API_ID", "25059287"))
 API_HASH = str(getenv("API_HASH", "5e7701953107a273724b07f2beaf8f17"))
 BOT_TOKEN = str(getenv("BOT_TOKEN", ""))
 FORCE_SUB = os.environ.get("FORCE_SUB", "") 
