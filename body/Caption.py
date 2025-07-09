@@ -1,206 +1,323 @@
-from pyrogram import *
-from info import *
+import os
+import sys
+import re
 import asyncio
+from time import time
+from datetime import datetime
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram import errors
+from info import *
 from Script import script
 from .database import *
-import re
-from pyrogram.errors import FloodWait
-from pyrogram.types import *
 
-@Client.on_message(filters.command("start") & filters.private)
-async def strtCap(bot, message):
-    user_id = int(message.from_user.id)
-    await insert(user_id)
-    keyboard = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton("➕️ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟ ➕️", url=f"https://t.me/CustomCaptionBot?startchannel=true")
-            ],[
-                InlineKeyboardButton("Hᴇʟᴘ", callback_data="help"),
-                InlineKeyboardButton("Aʙᴏᴜᴛ", callback_data="about")
-            ],[
-                InlineKeyboardButton("🌐 Uᴘᴅᴀᴛᴇ", url=f"https://t.me/Silicon_Bot_Update"),
-                InlineKeyboardButton("📜 Sᴜᴘᴘᴏʀᴛ", url=r"https://t.me/Silicon_Botz")
-        ]]
-    )
-    await message.reply_photo(
-        photo=SILICON_PIC,
-        caption=f"<b>Hᴇʟʟᴏ {message.from_user.mention}\n\nɪ ᴀᴍ ᴀᴜᴛᴏ ᴄᴀᴘᴛɪᴏɴ ʙᴏᴛ ᴡɪᴛʜ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ.\n\nFᴏʀ ᴍᴏʀᴇ ɪɴғᴏ ʜᴏᴡ ᴛᴏ ᴜsᴇ ᴍᴇ ᴄʟɪᴄᴋ ᴏɴ ʜᴇʟᴘ ʙᴜᴛᴛᴏɴ ɢɪᴠᴇɴ ʙᴇʟᴏᴡ.\n\nMᴀɪɴᴛᴀɪɴᴇᴅ ʙʏ »<a href='https://t.me/Silicon_Bot_Update'>Sɪʟɪᴄᴏɴ Bᴏᴛᴢ</a></b>",
-        reply_markup=keyboard
-    )
-
-@Client.on_message(filters.private & filters.user(ADMIN)  & filters.command(["total_users"]))
-async def all_db_users_here(client,message):
-    silicon = await message.reply_text("Please Wait....")
-    silicon_botz = await total_user()
-    await silicon.edit(f"Tᴏᴛᴀʟ Usᴇʀ :- `{silicon_botz}`")
-
-@Client.on_message(filters.private & filters.user(ADMIN) & filters.command(["broadcast"]))
-async def broadcast(bot, message):
-    if (message.reply_to_message):
-        silicon = await message.reply_text("Geting All ids from database..\n Please wait")
-        all_users = await getid()
-        tot = await total_user()
-        success = 0
-        failed = 0
-        deactivated = 0
-        blocked = 0
-        await silicon.edit(f"ʙʀᴏᴀᴅᴄᴀsᴛɪɴɢ...")
-        async for user in all_users:
-            try:
-                time.sleep(1)
-                await message.reply_to_message.copy(user['_id'])
-                success += 1
-            except errors.InputUserDeactivated:
-                deactivated +=1
-                await delete({"_id": user['_id']})
-            except errors.UserIsBlocked:
-                blocked +=1
-                await delete({"_id": user['_id']})
-            except Exception as e:
-                failed += 1
-                await delete({"_id": user['_id']})
-                pass
-            try:
-                await silicon.edit(f"<u>ʙʀᴏᴀᴅᴄᴀsᴛ ᴘʀᴏᴄᴇssɪɴɢ</u>\n\n• ᴛᴏᴛᴀʟ ᴜsᴇʀs: {tot}\n• sᴜᴄᴄᴇssғᴜʟ: {success}\n• ʙʟᴏᴄᴋᴇᴅ ᴜsᴇʀs: {blocked}\n• ᴅᴇʟᴇᴛᴇᴅ ᴀᴄᴄᴏᴜɴᴛs: {deactivated}\n• ᴜɴsᴜᴄᴄᴇssғᴜʟ: {failed}")
-            except FloodWait as e:
-                await asyncio.sleep(t.x)
-        await silicon.edit(f"<u>ʙʀᴏᴀᴅᴄᴀsᴛ ᴄᴏᴍᴘʟᴇᴛᴇᴅ</u>\n\n• ᴛᴏᴛᴀʟ ᴜsᴇʀs: {tot}\n• sᴜᴄᴄᴇssғᴜʟ: {success}\n• ʙʟᴏᴄᴋᴇᴅ ᴜsᴇʀs: {blocked}\n• ᴅᴇʟᴇᴛᴇᴅ ᴀᴄᴄᴏᴜɴᴛs: {deactivated}\n• ᴜɴsᴜᴄᴄᴇssғᴜʟ: {failed}")
-
-@Client.on_message(filters.private & filters.user(ADMIN) & filters.command("restart"))
-async def restart_bot(b, m):
-    silicon = await b.send_message(text="**🔄 𝙿𝚁𝙾𝙲𝙴𝚂𝚂𝙴𝚂 𝚂𝚃𝙾𝙿𝙴𝙳. 𝙱𝙾𝚃 𝙸𝚂 𝚁𝙴𝚂𝚃𝙰𝚁𝚃𝙸𝙽𝙶...**", chat_id=m.chat.id)       
-    await asyncio.sleep(3)
-    await silicon.edit("**✅️ 𝙱𝙾𝚃 𝙸𝚂 𝚁𝙴𝚂𝚃𝙰𝚁𝚃𝙴𝙳. 𝙽𝙾𝚆 𝚈𝙾𝚄 𝙲𝙰𝙽 𝚄𝚂𝙴 𝙼𝙴**")
-    os.execl(sys.executable, sys.executable, *sys.argv)
-
-@Client.on_message(filters.command("set_cap") & filters.channel)
-async def setCap(bot, message):
-    if len(message.command) < 2:
-        return await message.reply(
-            "Usᴀɢᴇ: **/set_cap 𝑌𝑜𝑢𝑟 𝑐𝑎𝑝𝑡𝑖𝑜𝑛 𝑈𝑠𝑒 <code>{file_name}</code> 𝑇𝑜 𝑠ℎ𝑜𝑤 𝑦𝑜𝑢𝑟 𝐹𝑖𝑙𝑒 𝑁𝑎𝑚𝑒.\n\n𝑈𝑠𝑒<code>{file_size}</code> 𝑇𝑜 𝑠ℎ𝑜𝑤 𝑦𝑜𝑢𝑟 𝐹𝑖𝑙𝑒 𝑆𝑖𝑧𝑒/n/n✓ 𝑀𝑎𝑦 𝐵𝑒 𝑁𝑜𝑤 𝑌𝑜𝑢 𝑎𝑟𝑒 𝑐𝑙𝑒𝑎𝑟💫**"
-        )
-    chnl_id = message.chat.id
-    caption = (
-        message.text.split(" ", 1)[1] if len(message.text.split(" ", 1)) > 1 else None
-    )
-    chkData = await chnl_ids.find_one({"chnl_id": chnl_id})
-    if chkData:
-        await updateCap(chnl_id, caption)
-        return await message.reply(f"Your New Caption: {caption}")
-    else:
-        await addCap(chnl_id, caption)
-        return await message.reply(f"Yᴏᴜʀ Nᴇᴡ Cᴀᴘᴛɪᴏɴ Is: {caption}")
-
-@Client.on_message(filters.command("del_cap") & filters.channel)
-async def delCap(_, msg):
-    chnl_id = msg.chat.id
-    try:
-        await chnl_ids.delete_one({"chnl_id": chnl_id})
-        return await msg.reply("<b><i>✓ Sᴜᴄᴄᴇssғᴜʟʟʏ... Dᴇʟᴇᴛᴇᴅ Yᴏᴜʀ Cᴀᴘᴛɪᴏɴ Nᴏᴡ I ᴀᴍ Usɪɴɢ Mʏ Dᴇғᴀᴜʟᴛ Cᴀᴘᴛɪᴏɴ </i></b>")
-    except Exception as e:
-        e_val = await msg.replay(f"ERR I GOT: {e}")
-        await asyncio.sleep(5)
-        await e_val.delete()
-        return
-
-def extract_language(default_caption):
-    language_pattern = r'\b(Hindi|English|Tamil|Telugu|Malayalam|Kannada|Hin)\b'#Contribute More Language If You Have
-    languages = set(re.findall(language_pattern, default_caption, re.IGNORECASE))
-    if not languages:
-        return "Hindi-English"
-    return ", ".join(sorted(languages, key=str.lower))
-
-def extract_year(default_caption):
-    match = re.search(r'\b(19\d{2}|20\d{2})\b', default_caption)
-    return match.group(1) if match else None
-
-@Client.on_message(filters.channel)
-async def reCap(bot, message):
-    chnl_id = message.chat.id
-    default_caption = message.caption
-    if message.media:
-        for file_type in ("video", "audio", "document", "voice"):
-            obj = getattr(message, file_type, None)
-            if obj and hasattr(obj, "file_name"):
-                file_name = obj.file_name
-                file_size = obj.file_size
-                language = extract_language(default_caption)
-                year = extract_year(default_caption)
-                file_name = (
-                    re.sub(r"@\w+\s*", "", file_name)
-                    .replace("_", " ")
-                    .replace(".", " ")
-                )
-                cap_dets = await chnl_ids.find_one({"chnl_id": chnl_id})
-                try:
-                    if cap_dets:
-                        cap = cap_dets["caption"]
-                        replaced_caption = cap.format(file_name=file_name, file_size=get_size(file_size), default_caption=default_caption, language=language, year=year)
-                        await message.edit(replaced_caption)
-                    else:
-                        replaced_caption = DEF_CAP.format(file_name=file_name, file_size=get_size(file_size), default_caption=default_caption, language=language, year=year)
-                        await message.edit(replaced_caption)
-                except FloodWait as e:
-                    await asyncio.sleep(e.x)
-                    continue
-    return
-
-# Size conversion function
+# Helper functions
 def get_size(size):
-    units = ["Bytes", "Kʙ", "Mʙ", "Gʙ", "Tʙ", "Pʙ", "Eʙ"]
+    """Convert file size to human-readable format"""
+    units = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB"]
     size = float(size)
     i = 0
-    while size >= 1024.0 and i < len(units) - 1:  # Changed the condition to stop at the last unit
+    while size >= 1024.0 and i < len(units) - 1:
         i += 1
         size /= 1024.0
     return "%.2f %s" % (size, units[i])
 
-@Client.on_callback_query(filters.regex(r'^start'))
-async def start(bot, query):
-    await query.message.edit_text(
-        text=script.START_TXT.format(query.from_user.mention),  
-        reply_markup=InlineKeyboardMarkup(
-            [[
-                InlineKeyboardButton("➕️ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟ ➕️", url=f"http://t.me/CustomCaptionBot?startchannel=true")
-                ],[
-                InlineKeyboardButton("Hᴇʟᴘ", callback_data="help"),
-                InlineKeyboardButton("Aʙᴏᴜᴛ", callback_data="about")
+def get_wish():
+    """Return appropriate greeting based on time of day"""
+    hour = datetime.now().hour
+    if 5 <= hour < 12:
+        return "Good Morning"
+    elif 12 <= hour < 16:
+        return "Good Afternoon"
+    elif 16 <= hour < 20:
+        return "Good Evening"
+    return "Good Night"
+
+def extract_metadata(file_name, default_caption, file_attr=None):
+    """Extract all metadata from filename and caption"""
+    metadata = {
+        'filename': re.sub(r"@\w+\s*", "", file_name).replace("_", " ").replace(".", " "),
+        'filesize': None,
+        'caption': default_caption or "",
+        'language': 'Hindi-English',
+        'year': None,
+        'quality': None,
+        'season': None,
+        'episode': None,
+        'duration': None,
+        'height': None,
+        'width': None,
+        'ext': file_name.split('.')[-1].upper() if '.' in file_name else '',
+        'resolution': None,
+        'mime_type': None,
+        'title': None,
+        'artist': None,
+        'wish': get_wish()
+    }
+    
+    # File size
+    if file_attr and hasattr(file_attr, 'file_size'):
+        metadata['filesize'] = get_size(file_attr.file_size)
+    
+    # Language extraction
+    language_pattern = r'\b(Hindi|English|Tamil|Telugu|Malayalam|Kannada|Hin|Tel|Tam|Mal)\b'
+    languages = set(re.findall(language_pattern, file_name + " " + default_caption, re.IGNORECASE))
+    if languages:
+        metadata['language'] = ", ".join(sorted(languages, key=str.lower))
+    
+    # Year extraction
+    year_match = re.search(r'\b(19\d{2}|20\d{2})\b', file_name + " " + default_caption)
+    if year_match:
+        metadata['year'] = year_match.group(1)
+    
+    # Quality extraction
+    quality_match = re.search(r'\b(360p|480p|720p|1080p|1440p|2160p|4K|8K|HD|FHD|UHD)\b', file_name, re.IGNORECASE)
+    if quality_match:
+        metadata['quality'] = quality_match.group(0)
+    
+    # Season-Episode extraction
+    season_ep_match = re.search(r'\bS(\d{1,2})E(\d{1,2})\b', file_name, re.IGNORECASE)
+    if season_ep_match:
+        metadata['season'] = season_ep_match.group(1)
+        metadata['episode'] = season_ep_match.group(2)
+    
+    # Video specific attributes
+    if file_attr and hasattr(file_attr, 'duration'):
+        metadata['duration'] = str(file_attr.duration) + "s"
+    
+    if file_attr and hasattr(file_attr, 'height') and hasattr(file_attr, 'width'):
+        metadata['height'] = file_attr.height
+        metadata['width'] = file_attr.width
+        metadata['resolution'] = f"{file_attr.width}x{file_attr.height}"
+    
+    if file_attr and hasattr(file_attr, 'mime_type'):
+        metadata['mime_type'] = file_attr.mime_type
+    
+    # Audio specific attributes
+    if file_attr and hasattr(file_attr, 'title'):
+        metadata['title'] = file_attr.title
+    
+    if file_attr and hasattr(file_attr, 'performer'):
+        metadata['artist'] = file_attr.performer
+    
+    return metadata
+
+@Client.on_message(filters.command("start") & filters.private)
+async def start_command(bot, message):
+    user_id = message.from_user.id
+    await insert(user_id)
+    
+    keyboard = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("➕️ Add Me To Your Channel ➕️", 
+                url=f"https://t.me/{bot.username}?startchannel=true")
             ],[
-                InlineKeyboardButton("🌐 Uᴘᴅᴀᴛᴇ", url=f"https://t.me/Silicon_Bot_Update"),
-                InlineKeyboardButton("📜 Sᴜᴘᴘᴏʀᴛ", url=r"https://t.me/Silicon_Botz")
-            ]]
+                InlineKeyboardButton("Help", callback_data="help"),
+                InlineKeyboardButton("About", callback_data="about")
+            ],[
+                InlineKeyboardButton("🌐 Update", url=UPDATE_CHANNEL),
+                InlineKeyboardButton("📜 Support", url=SUPPORT_GROUP)
+            ]
+        ]
+    )
+    
+    await message.reply_photo(
+        photo=SILICON_PIC,
+        caption=script.START_MESSAGE.format(message.from_user.mention),
+        reply_markup=keyboard
+    )
+
+@Client.on_message(filters.private & filters.user(ADMIN) & filters.command("total_users"))
+async def total_users_command(client, message):
+    silicon = await message.reply_text("Please Wait...")
+    total = await total_user()
+    await silicon.edit(f"Total Users: `{total}`")
+
+@Client.on_message(filters.private & filters.user(ADMIN) & filters.command("broadcast"))
+async def broadcast_command(bot, message):
+    if not message.reply_to_message:
+        return await message.reply("Please reply to a message to broadcast")
+    
+    silicon = await message.reply_text("Getting all users from database...")
+    all_users = await getid()
+    total = await total_user()
+    
+    success = failed = deactivated = blocked = 0
+    await silicon.edit("Broadcasting started...")
+    
+    async for user in all_users:
+        try:
+            await asyncio.sleep(1)  # Non-blocking sleep
+            await message.reply_to_message.copy(user['_id'])
+            success += 1
+        except errors.InputUserDeactivated:
+            deactivated += 1
+            await delete({"_id": user['_id']})
+        except errors.UserIsBlocked:
+            blocked += 1
+            await delete({"_id": user['_id']})
+        except Exception as e:
+            failed += 1
+            await delete({"_id": user['_id']})
+        
+        try:
+            if success % 10 == 0:  # Update progress every 10 messages
+                await silicon.edit(
+                    f"<u>Broadcast Progress</u>\n\n"
+                    f"• Total users: {total}\n"
+                    f"• Successful: {success}\n"
+                    f"• Blocked users: {blocked}\n"
+                    f"• Deleted accounts: {deactivated}\n"
+                    f"• Unsuccessful: {failed}"
+                )
+        except FloodWait as e:
+            await asyncio.sleep(e.value)
+    
+    await silicon.edit(
+        f"<u>Broadcast Completed</u>\n\n"
+        f"• Total users: {total}\n"
+        f"• Successful: {success}\n"
+        f"• Blocked users: {blocked}\n"
+        f"• Deleted accounts: {deactivated}\n"
+        f"• Unsuccessful: {failed}"
+    )
+
+@Client.on_message(filters.private & filters.user(ADMIN) & filters.command("restart"))
+async def restart_command(bot, message):
+    msg = await message.reply("**🔄 Processes Stopped. Bot is Restarting...**")
+    await asyncio.sleep(3)
+    await msg.edit("**✅ Bot is Restarted. Now you can use me**")
+    os.execl(sys.executable, sys.executable, *sys.argv)
+
+@Client.on_message(filters.command("set_cap") & filters.channel)
+async def set_caption_command(bot, message):
+    if len(message.command) < 2:
+        return await message.reply(
+            "Usage: /set_cap Your Caption\n\n"
+            "Available variables:\n"
+            "• {filename} - File name\n"
+            "• {filesize} - File size\n"
+            "• {caption} - Original caption\n"
+            "• {language} - Detected languages\n"
+            "• {year} - Detected year\n"
+            "• {quality} - Video quality\n"
+            "• {season} - Season number\n"
+            "• {episode} - Episode number\n"
+            "• {duration} - Duration (videos)\n"
+            "• {height} - Video height\n"
+            "• {width} - Video width\n"
+            "• {ext} - File extension\n"
+            "• {resolution} - Video resolution\n"
+            "• {mime_type} - File mime type\n"
+            "• {title} - Audio title\n"
+            "• {artist} - Audio artist\n"
+            "• {wish} - Time-based greeting"
+        )
+    
+    chnl_id = message.chat.id
+    caption = message.text.split(" ", 1)[1]
+    
+    chk_data = await chnl_ids.find_one({"chnl_id": chnl_id})
+    if chk_data:
+        await updateCap(chnl_id, caption)
+        await message.reply(f"✅ Caption updated:\n\n{caption}")
+    else:
+        await addCap(chnl_id, caption)
+        await message.reply(f"✅ New caption set:\n\n{caption}")
+
+@Client.on_message(filters.command("del_cap") & filters.channel)
+async def delete_caption_command(_, message):
+    chnl_id = message.chat.id
+    try:
+        await chnl_ids.delete_one({"chnl_id": chnl_id})
+        await message.reply("✅ Caption deleted. Now using default caption.")
+    except Exception as e:
+        error_msg = await message.reply(f"❌ Error: {e}")
+        await asyncio.sleep(5)
+        await error_msg.delete()
+
+@Client.on_message(filters.channel)
+async def handle_channel_messages(bot, message):
+    if not message.media:
+        return
+    
+    chnl_id = message.chat.id
+    default_caption = message.caption or ""
+    
+    # Get file attributes
+    file_attr = None
+    for file_type in ("video", "audio", "document", "voice", "photo"):
+        if getattr(message, file_type, None):
+            file_attr = getattr(message, file_type)
+            break
+    
+    if not file_attr or not hasattr(file_attr, "file_name"):
+        return
+    
+    # Prepare metadata
+    metadata = extract_metadata(file_attr.file_name, default_caption, file_attr)
+    
+    # Get custom caption if exists
+    cap_dets = await chnl_ids.find_one({"chnl_id": chnl_id})
+    caption_template = cap_dets["caption"] if cap_dets else DEF_CAP
+    
+    try:
+        # Format caption with all available variables
+        formatted_caption = caption_template.format(**metadata)
+        await message.edit(formatted_caption)
+    except FloodWait as e:
+        await asyncio.sleep(e.value)
+        await message.edit(formatted_caption)
+    except Exception as e:
+        print(f"Error editing caption: {e}")
+
+# Callback handlers
+@Client.on_callback_query(filters.regex(r'^start'))
+async def callback_start(bot, query):
+    await query.message.edit_text(
+        text=script.START_TXT.format(query.from_user.mention),
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton("➕️ Add Me To Your Channel ➕️", 
+                    url=f"https://t.me/{bot.username}?startchannel=true")
+                ],
+                [
+                    InlineKeyboardButton("Help", callback_data="help"),
+                    InlineKeyboardButton("About", callback_data="about")
+                ],
+                [
+                    InlineKeyboardButton("🌐 Update", url=UPDATE_CHANNEL),
+                    InlineKeyboardButton("📜 Support", url=SUPPORT_GROUP)
+                ]
+            ]
         ),
         disable_web_page_preview=True
-)
+    )
 
 @Client.on_callback_query(filters.regex(r'^help'))
-async def help(bot, query):
+async def callback_help(bot, query):
     await query.message.edit_text(
         text=script.HELP_TXT,
         reply_markup=InlineKeyboardMarkup(
-            [[
-            InlineKeyboardButton('About', callback_data='about')
-            ],[
-            InlineKeyboardButton('↩ ʙᴀᴄᴋ', callback_data='start')
-            ]]
+            [
+                [InlineKeyboardButton("About", callback_data="about")],
+                [InlineKeyboardButton("↩ Back", callback_data="start")]
+            ]
         ),
-        disable_web_page_preview=True    
-)
-
+        disable_web_page_preview=True
+    )
 
 @Client.on_callback_query(filters.regex(r'^about'))
-async def about(bot, query):
+async def callback_about(bot, query):
     await query.message.edit_text(
         text=script.ABOUT_TXT,
         reply_markup=InlineKeyboardMarkup(
-            [[
-            InlineKeyboardButton('ʜᴏᴡ ᴛᴏ ᴜsᴇ ᴍᴇ ❓', callback_data='help')
-            ],[
-            InlineKeyboardButton('↩ ʙᴀᴄᴋ', callback_data='start')
-            ]]
+            [
+                [InlineKeyboardButton("How to Use Me ❓", callback_data="help")],
+                [InlineKeyboardButton("↩ Back", callback_data="start")]
+            ]
         ),
-        disable_web_page_preview=True 
-
-)
-
+        disable_web_page_preview=True
+    )
